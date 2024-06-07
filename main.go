@@ -5,78 +5,79 @@ import (
 )
 
 // type functions
-type Mod func() map[int32]string
+type Mod func(m *map[string]int32)
 type Pattern func(mods ...Mod)
 
 const (
-	colorStart        = "\033[%sm"
-	colorFinish       = "\033[0m"
-	Red         int32 = 31
-	Green       int32 = 32
-	Yellow      int32 = 33
-	Blue        int32 = 34
+	colorStart  = "\033[%sm"
+	colorFinish = "\033[0m"
 )
 
-// global variables
-var size int32 = 15
-var color int32 = 32
-var char rune = '*'
+const (
+	Red = iota + 31
+	Green
+	Yellow
+	Blue
+)
 
-func sizeFunc() map[int32]string {
-	m := make(map[int32]string)
-	m[15] = "size"
-	return m
+func sizeFunc(i int32) Mod {
+	return func(m *map[string]int32) {
+		(*m)["size"] = i
+	}
 }
 
-func charFunc() map[rune]string {
-	m := make(map[rune]string)
-	m['*'] = "char"
-	return m
+func charFunc(r rune) Mod {
+	return func(m *map[string]int32) {
+		(*m)["char"] = r
+	}
 }
 
-func colorFunc() map[int32]string {
-	m := make(map[int32]string)
-	m[Blue] = "color"
-	return m
+func colorFunc(i int32) Mod {
+	return func(m *map[string]int32) {
+		(*m)["color"] = i
+	}
 }
 
 func main() {
-	sandglass(diagonalHourglass, charFunc, sizeFunc, colorFunc)
+	sandglass(diagonalHourglass, charFunc('*'), sizeFunc(15), colorFunc(Red))
+	sandglass(upperHalfFullSandglass, charFunc('*'), sizeFunc(15), colorFunc(Yellow))
+	sandglass(hollowSandglass, charFunc('*'), sizeFunc(15), colorFunc(Blue))
 }
 
 func sandglass(p Pattern, mods ...Mod) {
-	for _, m := range mods {
-		p(m)
+	p(mods...)
+}
+
+func assignparam(m *map[string]int32, mods ...Mod) {
+	for _, mod := range mods {
+		mod(m)
 	}
 }
 
-// hollow sandglass
 func hollowSandglass(mods ...Mod) {
-	for _, m := range mods {
-		validateParameter(m)
-	}
+	m := make(map[string]int32)
+	assignparam(&m, mods...)
 
-	startColor := fmt.Sprintf(fmt.Sprintf("%s", colorStart), fmt.Sprintf("%d", color))
-
+	startColor := fmt.Sprintf(fmt.Sprintf("%s", colorStart), fmt.Sprintf("%d", m["color"]))
 	var numSpaces int32 = 2
-	var numChars int32 = size
+	var numChars int32 = m["size"]
 	var i int32
 	var j int32
 
-	for i = 1; i <= size; i++ {
+	for i = 1; i <= m["size"]; i++ {
 		for j = 1; j <= numSpaces; j++ {
 			fmt.Print(" ")
 		}
 		for j = 1; j <= numChars; j++ {
 			if j == 1 || j == numChars {
-				fmt.Print(startColor + string(char) + colorFinish)
-			} else if i == 1 || i == size {
-				fmt.Print(startColor + string(char) + colorFinish)
+				fmt.Print(startColor + string(m["char"]) + colorFinish)
+			} else if i == 1 || i == m["size"] {
+				fmt.Print(startColor + string(m["char"]) + colorFinish)
 			} else {
 				fmt.Print(" ")
 			}
 		}
-		if i <= size/2 {
+		if i <= m["size"]/2 {
 			numSpaces++
 			numChars -= 2
 		} else {
@@ -89,26 +90,25 @@ func hollowSandglass(mods ...Mod) {
 
 // half full sandglass
 func upperHalfFullSandglass(mods ...Mod) {
-	for _, m := range mods {
-		validateParameter(m)
-	}
+	m := make(map[string]int32)
+	assignparam(&m, mods...)
 
-	startColor := fmt.Sprintf(fmt.Sprintf("%s", colorStart), fmt.Sprintf("%d", color))
+	startColor := fmt.Sprintf(fmt.Sprintf("%s", colorStart), fmt.Sprintf("%d", m["color"]))
 
 	var numSpaces int32 = 2
-	var numChars int32 = size
+	var numChars int32 = m["size"]
 	var i int32
 	var j int32
 
-	for i = 1; i <= size/2; i++ {
+	for i = 1; i <= m["size"]/2; i++ {
 		for j = 1; j <= numSpaces; j++ {
 			fmt.Print(" ")
 		}
 		for j = 1; j <= numChars; j++ {
 			if j == 1 || j == numChars {
-				fmt.Print(startColor + string(char) + colorFinish)
-			} else if i == 1 || i == size {
-				fmt.Print(startColor + string(char) + colorFinish)
+				fmt.Print(startColor + string(m["char"]) + colorFinish)
+			} else if i == 1 || i == m["char"] {
+				fmt.Print(startColor + string(m["char"]) + colorFinish)
 			} else {
 				fmt.Print(" ")
 			}
@@ -118,12 +118,12 @@ func upperHalfFullSandglass(mods ...Mod) {
 		fmt.Println()
 	}
 
-	for i = 1; i <= size/2+1; i++ {
+	for i = 1; i <= m["size"]/2+1; i++ {
 		for j = 1; j <= numSpaces; j++ {
 			fmt.Print(" ")
 		}
 		for j = 1; j <= numChars; j++ {
-			fmt.Print(startColor + string(char) + colorFinish)
+			fmt.Print(startColor + string(m["char"]) + colorFinish)
 		}
 		numSpaces--
 		numChars += 2
@@ -134,30 +134,25 @@ func upperHalfFullSandglass(mods ...Mod) {
 
 // diagonal sandglass
 func diagonalHourglass(mods ...Mod) {
-	var size int32 = 15
-	var color int32 = 32
-	var char rune = '*'
+	m := make(map[string]int32)
+	assignparam(&m, mods...)
 
-	for _, m := range mods {
-		validateParameter(m)
-	}
-
-	startColor := fmt.Sprintf(fmt.Sprintf("%s", colorStart), fmt.Sprintf("%d", color))
+	startColor := fmt.Sprintf(fmt.Sprintf("%s", colorStart), fmt.Sprintf("%d", m["color"]))
 
 	var numSpaces int32 = 2
-	var numChars int32 = size
+	var numChars int32 = m["size"]
 	var i int32
 	var j int32
 
-	for i = 1; i <= size/2; i++ {
+	for i = 1; i <= m["size"]/2; i++ {
 		for j = 1; j <= numSpaces; j++ {
 			fmt.Print(" ")
 		}
 		for j = 1; j <= numChars; j++ {
 			if j == 1 || j > numChars/2 {
-				fmt.Print(startColor + string(char) + colorFinish)
+				fmt.Print(startColor + string(m["char"]) + colorFinish)
 			} else if i == 1 {
-				fmt.Print(startColor + string(char) + colorFinish)
+				fmt.Print(startColor + string(m["char"]) + colorFinish)
 			} else {
 				fmt.Print(" ")
 			}
@@ -167,15 +162,15 @@ func diagonalHourglass(mods ...Mod) {
 		fmt.Println()
 	}
 
-	for i = 1; i <= size/2+1; i++ {
+	for i = 1; i <= m["size"]/2+1; i++ {
 		for j = 1; j <= numSpaces; j++ {
 			fmt.Print(" ")
 		}
 		for j = 1; j <= numChars; j++ {
 			if j == 1 || j <= numChars/2+1 || j == numChars {
-				fmt.Print(startColor + string(char) + colorFinish)
-			} else if i == 1 || i == size/2+1 {
-				fmt.Print(startColor + string(char) + colorFinish)
+				fmt.Print(startColor + string(m["char"]) + colorFinish)
+			} else if i == 1 || i == m["size"]/2+1 {
+				fmt.Print(startColor + string(m["char"]) + colorFinish)
 			} else {
 				fmt.Print(" ")
 			}
@@ -185,17 +180,4 @@ func diagonalHourglass(mods ...Mod) {
 		fmt.Println()
 	}
 	fmt.Println()
-}
-
-// param validator
-func validateParameter(m Mod) {
-	for key, val := range m() {
-		if val == "size" {
-			size = key
-		} else if val == "color" {
-			color = key
-		} else if val == "char" {
-			char = key
-		}
-	}
 }
